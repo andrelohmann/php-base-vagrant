@@ -26,7 +26,7 @@ Vagrant.configure(2) do |config|
   config.vm.network "private_network", ip: "192.168.233.100"
   config.vm.hostname = "lokal.dev"
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.synced_folder ".", "/var/www", create: true, owner: "vagrant", group: "www-data", mount_options: ["dmode=777,fmode=777"]
+  config.vm.synced_folder "./html", "/var/www/html", create: true, owner: "vagrant", group: "www-data", mount_options: ["dmode=777,fmode=777"]
   config.vm.synced_folder "./ansible", "/vagrant/ansible", create: true, owner: "vagrant", group: "vagrant", mount_options: ["dmode=777,fmode=777"]
 
   config.vm.provision :ansible_local do |ansible|

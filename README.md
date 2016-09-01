@@ -16,7 +16,14 @@ Download this repo and enter it. Inside the directory:
 vagrant up
 ```
 
-After the successful provisioning of the vagrant box you can enter the document_root path through your browser by opening the following url:
+After the successful provisioning of the vagrant box you can enter the html path through your browser by opening the following url:
 
 http://lokal.dev
 
+PHPMYADMIN is available through:
+
+http://lokal.dev/phpmyadmin
+
+User: root
+
+Password: vagrant
