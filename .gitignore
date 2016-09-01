@@ -1,0 +1,4 @@
+/nbproject
+/.vagrant
+*.retry
+/document_root/vendor

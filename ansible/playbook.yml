@@ -1,0 +1,111 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+  vars:
+    mysql_root_pass: vagrant
+    document_root: /var/www/html
+    php_timezone: Europe/Berlin
+    domain: lokal.dev
+  tasks:
+    
+    - name: add jessie backports
+      apt_repository:
+        repo='deb http://http.debian.net/debian jessie-backports main contrib non-free'
+        state=present
+        update_cache=yes
+      
+    - name: Set MySQL root password before installing
+      debconf: name='mysql-server' question='mysql-server/root_password' value='{{mysql_root_pass | quote}}' vtype='password'
+    
+    - name: Confirm MySQL root password before installing
+      debconf: name='mysql-server' question='mysql-server/root_password_again' value='{{mysql_root_pass | quote}}' vtype='password'
+    
+    - name: debconf for phpmyadmin
+      debconf:
+        name: phpmyadmin
+        question: "{{ item.question }}"
+        value: "{{ item.value }}"
+        vtype: "{{ item.vtype }}"
+      with_items:
+        - { question: 'phpmyadmin/dbconfig-install', value: 'true', vtype: 'boolean' }
+        - { question: 'phpmyadmin/app-password-confirm', value: '{{mysql_root_pass}}', vtype: 'password' }
+        - { question: 'phpmyadmin/mysql/admin-pass', value: '{{mysql_root_pass}}', vtype: 'password' }
+        - { question: 'phpmyadmin/mysql/app-pass', value: '{{mysql_root_pass}}', vtype: 'password' }
+        - { question: 'phpmyadmin/reconfigure-webserver', value: 'apache2', vtype: 'multiselect' }
+            
+    - name: install required packages
+      apt: pkg={{ item }} state=latest update_cache=true default_release=jessie-backports
+      with_items:
+        - git
+        - curl
+        - htop
+        - php5
+        - php5-cli
+        - php5-gd
+        - php5-mysql
+        - php5-curl
+        - php5-imagick
+        - php5-mcrypt
+        - php5-tidy
+        - php5-geoip
+        - php5-memcache
+        - geoip-bin
+        - apache2
+        - mysql-server
+        - phpmyadmin
+        - memcached
+        - python-mysqldb
+        - sudo
+
+    - name: memcached listen on all IPs
+      lineinfile: dest=/etc/memcached.conf regexp="^-l " line="-l 0.0.0.0" state=present
+
+    - name: memcached up memory to 128 MB
+      lineinfile: dest=/etc/memcached.conf regexp="^-m " line="-m 128" state=present
+
+    - name: memcached allow more connections
+      lineinfile: dest=/etc/memcached.conf regexp="^-c " line="-c 4096" state=present
+      
+    - name: restart memcached
+      service: name=memcached state=restarted
+    
+    - name: enabled mod_rewrite
+      apache2_module: name=rewrite state=present
+      
+    - name: remove default.conf
+      file:
+        path=/etc/apache2/sites-available/000-default.conf
+        state=absent
+    - name: copy apache config template
+      template:
+        src=000-default.conf.j2
+        dest=/etc/apache2/sites-available/000-default.conf
+    
+    - name: remove default html files
+      file:
+        path=/var/www/html/index.html
+        state=absent
+        
+    - name: restart apache2
+      service:
+        name=apache2
+        state=restarted
+        
+    - name: Install Composer
+      get_url:
+        url=https://getcomposer.org/composer.phar
+        dest=/usr/local/bin/composer
+        mode=0755
+        validate_certs=no
+    
+    - name: Tidy up the system
+      shell: apt-get clean -y; apt-get autoremove -y;
+    
+    - name: make git ignore the filepermissions change
+      shell: cd /var/www/html/; git config core.filemode false;
+    
+    - name: composer install
+      composer:
+        command=install 
+        working_dir=/var/www/html

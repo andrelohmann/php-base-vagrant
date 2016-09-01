@@ -1,0 +1,11 @@
+{
+    "name": "andrelohmann/php-base-vagrant",
+    "require": {
+        "php": ">=5.5.9",
+        "composer/installers": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "5.5.*"
+    },
+    "minimum-stability": "stable"
+}
