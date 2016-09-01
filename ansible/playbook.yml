@@ -103,7 +103,7 @@
       shell: apt-get clean -y; apt-get autoremove -y;
     
     - name: make git ignore the filepermissions change
-      shell: cd /var/www/html/; git config core.filemode false;
+      shell: cd /var/www/; git config core.filemode false;
     
     - name: composer install
       composer:
